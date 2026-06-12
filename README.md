@@ -1,6 +1,5 @@
 <div align="center">
 
-<img src="docs/architecture.png" alt="NEOTAJIB Quant Terminal — Project Architecture" width="100%" />
 
 # NEOTAJIB — QUANT TERMINAL
 
@@ -18,6 +17,12 @@
 ## Overview
 
 NEOTAJIB Quant Terminal is a live trading dashboard built for algorithmic traders running multiple strategies across multiple platforms (MT4, MT5, NinjaTrader, Hyperliquid, IBKR). It pulls real-time data from a Supabase backend fed by trading EAs/bots and renders a CRT-style terminal UI optimised for monitoring during live sessions.
+
+---
+
+## Data Architecture
+
+<img src="docs/architecture.png" alt="Data Architecture" width="100%" />
 
 ---
 
