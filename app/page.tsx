@@ -14,10 +14,12 @@ import { StrategyTable, StrategyRow } from "./components/StrategyTable";
 import { GlobalTerminal } from "./components/GlobalTerminal";
 import { FilterBar, Filters, ALL } from "./components/FilterBar";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) throw new Error("Supabase env vars missing");
+  return createClient(url, key);
+}
 
 const STRATEGY_COLORS = ["#4ade80", "#c084fc", "#00ffff", "#ff9900", "#ff6666", "#ffffff"];
 
@@ -206,6 +208,7 @@ export default function Dashboard() {
 
   const fetchData = useCallback(async () => {
     try {
+      const supabase = getSupabaseClient();
       const [accountRes, tradesRes] = await Promise.all([
         supabase.from("live_account_state").select("*").order("last_update", { ascending: false }),
         supabase.from("trade_snapshots").select("*").order("open_time", { ascending: true }),
