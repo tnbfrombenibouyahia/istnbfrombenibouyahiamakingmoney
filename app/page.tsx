@@ -11,6 +11,7 @@ import { TransactionList, Transaction } from "./components/TransactionList";
 import { ReasoningPanel, LogEntry } from "./components/ReasoningPanel";
 import { RiskPanel } from "./components/RiskPanel";
 import { StrategyTable, StrategyRow } from "./components/StrategyTable";
+import { GlobalTerminal } from "./components/GlobalTerminal";
 import { FilterBar, Filters, ALL } from "./components/FilterBar";
 
 const supabase = createClient(
@@ -181,6 +182,7 @@ function buildLogs(trades: TradeSnapshot[]): LogEntry[] {
       time: new Date(t.close_time!).toUTCString().slice(17, 22),
       message: `${t.algo_name}: Closed ${t.symbol} ${t.lots}L → ${t.profit_net >= 0 ? "+" : ""}$${t.profit_net.toFixed(2)}`,
       level: t.profit_net < -200 ? ("WARN" as const) : ("INFO" as const),
+      algo: t.algo_name,
     }))
     .reverse();
 }
@@ -295,8 +297,8 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center font-mono">
-        <div className="text-green-400 text-sm animate-pulse uppercase tracking-widest">
+      <div className="min-h-screen bg-[#050a05] flex items-center justify-center font-mono">
+        <div className="text-green-400 text-sm animate-pulse uppercase tracking-widest glow-text">
           ESTABLISHING SECURE CONNECTION TO QUANT ENGINE...
         </div>
       </div>
@@ -305,9 +307,9 @@ export default function Dashboard() {
 
   if (fetchError) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center font-mono gap-3 px-8">
-        <div className="text-red-500 text-xs uppercase tracking-widest">⚠ CONNECTION ERROR</div>
-        <div className="border border-red-500 bg-black px-4 py-3 text-xs text-red-400 max-w-2xl w-full break-all">
+      <div className="min-h-screen bg-[#050a05] flex flex-col items-center justify-center font-mono gap-3 px-8">
+        <div className="text-red-500 text-xs uppercase tracking-widest glow-text-red">⚠ CONNECTION ERROR</div>
+        <div className="terminal-panel border border-red-500/50 px-4 py-3 text-xs text-red-400 max-w-2xl w-full break-all">
           {fetchError}
         </div>
       </div>
@@ -315,96 +317,107 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-green-400 font-mono p-2 lg:p-4 selection:bg-green-500/30">
-      <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-4 gap-4">
+    <>
+      <div className="crt-overlay" />
+      <div className="min-h-screen bg-[#050a05] text-green-400 font-mono p-2 lg:p-4 selection:bg-green-500/30">
+        <div className="max-w-[1920px] mx-auto flex flex-col xl:flex-row gap-4">
 
-        {/* Header */}
-        <header className="lg:col-span-4 border border-green-500 p-4 flex flex-col md:flex-row justify-between items-start md:items-center bg-black/80 relative overflow-hidden">
-          <div
-            className="absolute inset-0 opacity-10 pointer-events-none"
-            style={{ backgroundImage: 'linear-gradient(#4ade80 1px, transparent 1px), linear-gradient(90deg, #4ade80 1px, transparent 1px)', backgroundSize: '20px 20px' }}
-          />
-          <div className="flex gap-4 items-center relative z-10 mb-4 md:mb-0">
-            <Activity className="w-6 h-6 text-green-400" />
-            <h1 className="text-xl font-bold tracking-wider">NEOTAJIB — QUANT TERMINAL</h1>
-            <span className="animate-pulse bg-green-500/20 text-green-400 border border-green-500 px-2 py-0.5 text-xs font-bold">
-              LIVE
-            </span>
-          </div>
-          <div className="text-left md:text-right relative z-10 w-full md:w-auto">
-            <div className="flex justify-between md:block gap-4">
-              <div className="text-sm border-b border-green-500/30 pb-1 mb-1 text-green-500/70">
-                SYS_TIME: {time} UTC
+          {/* Main analytics area */}
+          <div className="flex-1 flex flex-col gap-4 min-w-0">
+
+            {/* Header */}
+            <header className="terminal-panel p-4 flex flex-col md:flex-row justify-between items-start md:items-center relative z-10">
+              <div className="flex gap-4 items-center mb-4 md:mb-0">
+                <Activity className="w-6 h-6 text-green-400 animate-pulse" />
+                <h1 className="text-xl font-bold tracking-widest glow-text">NEOTAJIB — QUANT TERMINAL</h1>
+                <span className="bg-green-500/10 text-green-400 border border-green-500/50 px-2 py-0.5 text-xs font-bold shadow-[0_0_8px_rgba(74,222,128,0.3)] animate-pulse">
+                  [LIVE]
+                </span>
               </div>
-              <div className={`font-bold tracking-tight ${totalPnl >= 0 ? 'text-green-400' : 'text-red-500'}`}>
-                NET_PNL_ALL: {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)} ({totalPnlPct >= 0 ? '+' : ''}{totalPnlPct.toFixed(2)}%)
+              <div className="text-left md:text-right w-full md:w-auto">
+                <div className="flex justify-between md:block gap-4">
+                  <div className="text-sm border-b md:border-b-0 border-green-500/30 pb-1 mb-1 text-green-500/60 uppercase tracking-widest">
+                    SYS_TIME_UTC: {time}
+                  </div>
+                  <div className={`font-bold tracking-tight glow-text ${totalPnl >= 0 ? 'text-green-400' : 'text-red-500 glow-text-red'}`}>
+                    NET_PNL_ALL: {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)} <span className="text-green-300">({totalPnlPct >= 0 ? '+' : ''}{totalPnlPct.toFixed(2)}%)</span>
+                  </div>
+                </div>
+              </div>
+            </header>
+
+            {/* Filters */}
+            <FilterBar
+              accounts={accountIds}
+              platforms={platformIds}
+              algos={algoIds}
+              symbols={symbolIds}
+              filters={filters}
+              onChange={setFilters}
+            />
+
+            {/* Row 1: Chart + KPIs */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              <div className="lg:col-span-3 h-[300px] lg:h-[400px]">
+                <PortfolioChart data={portfolioData} />
+              </div>
+              <div className="lg:col-span-1 h-[300px] lg:h-[400px]">
+                <KPIGrid
+                  cash={balance}
+                  positionValue={floatingPnl}
+                  totalCapital={equity}
+                  dailyPnl={dailyPnl}
+                  marginUsed={marginUsedPct}
+                  winRate={winRate}
+                />
               </div>
             </div>
+
+            {/* Row 2: Risk monitor + Strategy matrix */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              <div className="lg:col-span-1 h-[300px]">
+                <RiskPanel
+                  initialBalance={initialBalance}
+                  equity={riskAccount?.equity ?? 0}
+                  dailyPnl={dailyPnl}
+                  floatingPnl={riskAccount ? riskAccount.equity - riskAccount.balance : 0}
+                  dailyLossLimitPct={DAILY_LOSS_LIMIT_PCT}
+                  maxDrawdownPct={MAX_DRAWDOWN_PCT}
+                  singleAccount={singleAccount}
+                />
+              </div>
+              <div className="lg:col-span-3 h-[300px]">
+                <StrategyTable rows={strategyRows} />
+              </div>
+            </div>
+
+            {/* Row 3: Strategy comparison chart */}
+            <div className="h-[300px]">
+              <StrategyChart data={strategyData} strategies={strategies} />
+            </div>
+
+            {/* Row 4: Holdings + Transactions + Logs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-[350px]">
+              <div className="h-[350px]">
+                <HoldingsTable holdings={holdings} />
+              </div>
+              <div className="h-[350px]">
+                <TransactionList transactions={transactions} />
+              </div>
+              <div className="h-[350px]">
+                <ReasoningPanel logs={logs} />
+              </div>
+            </div>
+
           </div>
-        </header>
 
-        {/* Filters */}
-        <div className="lg:col-span-4">
-          <FilterBar
-            accounts={accountIds}
-            platforms={platformIds}
-            algos={algoIds}
-            symbols={symbolIds}
-            filters={filters}
-            onChange={setFilters}
-          />
-        </div>
-
-        {/* Row 1: Chart + KPIs */}
-        <div className="lg:col-span-3 h-[300px] lg:h-[400px]">
-          <PortfolioChart data={portfolioData} />
-        </div>
-        <div className="lg:col-span-1 h-[300px] lg:h-[400px]">
-          <KPIGrid
-            cash={balance}
-            positionValue={floatingPnl}
-            totalCapital={equity}
-            dailyPnl={dailyPnl}
-            marginUsed={marginUsedPct}
-            winRate={winRate}
-          />
-        </div>
-
-        {/* Row 2: Risk monitor + Strategy matrix */}
-        <div className="lg:col-span-1 h-[300px]">
-          <RiskPanel
-            initialBalance={initialBalance}
-            equity={riskAccount?.equity ?? 0}
-            dailyPnl={dailyPnl}
-            floatingPnl={riskAccount ? riskAccount.equity - riskAccount.balance : 0}
-            dailyLossLimitPct={DAILY_LOSS_LIMIT_PCT}
-            maxDrawdownPct={MAX_DRAWDOWN_PCT}
-            singleAccount={singleAccount}
-          />
-        </div>
-        <div className="lg:col-span-3 h-[300px]">
-          <StrategyTable rows={strategyRows} />
-        </div>
-
-        {/* Row 3: Strategy comparison chart */}
-        <div className="lg:col-span-4 h-[300px]">
-          <StrategyChart data={strategyData} strategies={strategies} />
-        </div>
-
-        {/* Row 4: Holdings + Transactions + Logs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:col-span-4 gap-4 min-h-[350px]">
-          <div className="h-[350px]">
-            <HoldingsTable holdings={holdings} />
+          {/* Right sidebar: Global Event Terminal */}
+          <div className="xl:w-[380px] 2xl:w-[440px] shrink-0 h-[600px] xl:h-[calc(100vh-2rem)] xl:sticky xl:top-4">
+            <GlobalTerminal logs={logs} strategies={strategies} />
           </div>
-          <div className="h-[350px]">
-            <TransactionList transactions={transactions} />
-          </div>
-          <div className="h-[350px]">
-            <ReasoningPanel logs={logs} />
-          </div>
-        </div>
 
+        </div>
       </div>
-    </div>
+    </>
   );
 }

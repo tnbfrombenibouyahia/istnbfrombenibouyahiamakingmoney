@@ -1,29 +1,33 @@
+import { AlertTriangle } from 'lucide-react';
+
 interface GaugeProps {
   label: string;
   used: number;
   limit: number;
+  pct: number;
 }
 
-function Gauge({ label, used, limit }: GaugeProps) {
-  const pct = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+function Gauge({ label, used, limit, pct }: GaugeProps) {
   const remaining = Math.max(limit - used, 0);
-  const color = pct < 50 ? '#4ade80' : pct < 80 ? '#eab308' : '#ef4444';
-  const textColor = pct < 50 ? 'text-green-400' : pct < 80 ? 'text-yellow-500' : 'text-red-500';
+  const isDanger = pct > 80;
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex justify-between text-xs">
-        <span className="text-green-500/70">{label}</span>
-        <span className={`font-bold ${textColor}`}>
+    <div className="space-y-1.5">
+      <div className="flex justify-between font-bold text-xs">
+        <span className={isDanger ? 'text-red-400 glow-text-red' : 'text-green-500/80 glow-text'}>{label}</span>
+        <span className={isDanger ? 'text-red-500 glow-text-red' : 'text-green-400 glow-text'}>
           ${used.toFixed(2)} / ${limit.toFixed(0)}
         </span>
       </div>
-      <div className="h-3 border border-green-500/40 bg-black relative">
-        <div className="h-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+      <div className="h-3 w-full border border-green-500/40 bg-[#020602] relative shadow-[0_0_5px_rgba(74,222,128,0.2)]">
+        <div
+          className={`h-full absolute left-0 top-0 transition-all ${isDanger ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-green-500/50'}`}
+          style={{ width: `${Math.min(pct, 100)}%` }}
+        />
       </div>
-      <div className="flex justify-between text-[10px]">
-        <span className={textColor}>{pct.toFixed(1)}% USED</span>
-        <span className="text-green-500/50">${remaining.toFixed(2)} REMAINING</span>
+      <div className="flex justify-between text-[9px] font-bold tracking-wider">
+        <span className={isDanger ? 'text-red-500 glow-text-red' : 'text-green-500/70'}>{pct.toFixed(1)}% USED</span>
+        <span className="text-green-500/60">${remaining.toFixed(2)} REMAINING</span>
       </div>
     </div>
   );
@@ -50,28 +54,33 @@ export function RiskPanel({
 }: RiskPanelProps) {
   const dailyLimit = initialBalance * dailyLossLimitPct;
   const ddLimit = initialBalance * maxDrawdownPct;
-  // FTMO counts floating P&L against the daily limit
   const dailyUsed = Math.max(0, -(dailyPnl + floatingPnl));
   const ddUsed = Math.max(0, initialBalance - equity);
+  const dailyUsedPct = dailyLimit > 0 ? (dailyUsed / dailyLimit) * 100 : 0;
+  const ddUsedPct = ddLimit > 0 ? (ddUsed / ddLimit) * 100 : 0;
 
   const breach = dailyUsed >= dailyLimit || ddUsed >= ddLimit;
-  const danger = dailyUsed >= dailyLimit * 0.8 || ddUsed >= ddLimit * 0.8;
+  const danger = dailyUsedPct > 80 || ddUsedPct > 80;
 
   return (
-    <div className={`border flex flex-col h-full bg-black ${breach ? 'border-red-500' : 'border-green-500'}`}>
-      <div className={`border-b p-2 text-sm font-bold flex justify-between items-center ${breach ? 'border-red-500 bg-red-950/30 text-red-500' : 'border-green-500 bg-green-950/30'}`}>
-        <span>PROP_RISK_MONITOR</span>
+    <div className="terminal-panel flex flex-col h-full uppercase">
+      <div className="terminal-header p-2 text-sm font-bold flex justify-between items-center tracking-widest border-b border-green-500/20">
+        <span className="glow-text text-green-300">PROP_RISK_MONITOR</span>
         {breach ? (
-          <span className="text-xs animate-pulse text-red-500 font-bold">⚠ BREACH</span>
+          <span className="flex items-center gap-1 text-[10px] text-red-500 font-bold animate-pulse glow-text-red">
+            <AlertTriangle size={12} fill="currentColor" stroke="black" /> BREACH
+          </span>
         ) : danger ? (
-          <span className="text-xs animate-pulse text-yellow-500 font-bold">⚠ DANGER</span>
+          <span className="flex items-center gap-1 text-[10px] text-yellow-500 font-bold" style={{ textShadow: '0 0 5px rgba(234, 179, 8, 0.5)' }}>
+            <AlertTriangle size={12} fill="currentColor" stroke="black" /> DANGER
+          </span>
         ) : (
-          <span className="text-xs text-green-400">OK</span>
+          <span className="text-[10px] text-green-400 font-bold glow-text">SAFE</span>
         )}
       </div>
-      <div className="flex-1 p-3 flex flex-col justify-center gap-5">
+      <div className="flex-1 px-4 py-6 flex flex-col justify-around space-y-4 text-xs font-mono">
         {!singleAccount ? (
-          <div className="text-center text-green-800 text-xs uppercase">
+          <div className="text-center text-green-800 text-xs uppercase tracking-widest">
             SELECT A SINGLE ACCOUNT TO MONITOR PROP RULES
           </div>
         ) : (
@@ -80,17 +89,19 @@ export function RiskPanel({
               label={`DAILY_LOSS_LIMIT (${(dailyLossLimitPct * 100).toFixed(0)}%)`}
               used={dailyUsed}
               limit={dailyLimit}
+              pct={dailyUsedPct}
             />
             <Gauge
               label={`MAX_DRAWDOWN (${(maxDrawdownPct * 100).toFixed(0)}%)`}
               used={ddUsed}
               limit={ddLimit}
+              pct={ddUsedPct}
             />
-            <div className="text-[10px] text-green-500/50 border-t border-green-500/20 pt-2">
-              BASE: ${initialBalance.toLocaleString()} — DAILY INCLUDES FLOATING P&L
-            </div>
           </>
         )}
+      </div>
+      <div className="px-4 py-3 border-t border-green-500/20 text-[9px] text-green-500/50 tracking-widest font-bold">
+        BASE: ${initialBalance.toLocaleString()} — DAILY INCLUDES FLOATING P&L
       </div>
     </div>
   );

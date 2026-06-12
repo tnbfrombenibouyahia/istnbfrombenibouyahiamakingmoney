@@ -20,33 +20,33 @@ function RiskGauge({ risk }: { risk: number }) {
 
 export function TransactionList({ transactions }: { transactions: Transaction[] }) {
   return (
-    <div className="border border-green-500 flex flex-col h-full bg-black">
-      <div className="border-b border-green-500 p-2 bg-green-950/30 text-sm font-bold">
-        <span>EXECUTION_FLOW</span>
+    <div className="terminal-panel flex flex-col h-full uppercase">
+      <div className="terminal-header p-2 text-sm font-bold tracking-widest">
+        <span className="glow-text text-green-300">EXECUTION_FLOW</span>
       </div>
       <div className="overflow-auto flex-1 p-2">
         {transactions.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-green-800 text-xs uppercase">
+          <div className="h-full flex items-center justify-center text-green-800 text-xs uppercase tracking-widest">
             NO CLOSED TRADES
           </div>
         ) : (
           <table className="w-full text-xs text-left font-mono">
-            <thead className="text-green-500/70 border-b border-green-500/30">
+            <thead className="text-[10px] text-green-500/60 border-b border-green-500/20 tracking-widest">
               <tr>
-                <th className="pb-2 font-normal">TIME</th>
-                <th className="pb-2 font-normal">PAIR</th>
-                <th className="pb-2 font-normal">ALGO</th>
-                <th className="pb-2 font-normal text-right">NET P&L</th>
-                <th className="pb-2 font-normal text-right">IMPACT</th>
+                <th className="pb-2 font-medium">TIME</th>
+                <th className="pb-2 font-medium">PAIR</th>
+                <th className="pb-2 font-medium">ALGO</th>
+                <th className="pb-2 font-medium text-right">NET P&L</th>
+                <th className="pb-2 font-medium text-right">IMPACT</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="text-[11px]">
               {transactions.map((tx) => (
-                <tr key={tx.id} className="border-b border-green-500/10 hover:bg-green-500/5">
-                  <td className="py-1.5 opacity-70">{tx.time}</td>
-                  <td className="py-1.5 font-bold text-green-300">{tx.pair}</td>
-                  <td className="py-1.5 text-green-500/80 truncate max-w-[70px]">{tx.algo}</td>
-                  <td className={`py-1.5 text-right font-bold ${tx.pnl >= 0 ? 'text-green-400' : 'text-red-500'}`}>
+                <tr key={tx.id} className="border-b border-green-500/10 hover:bg-green-500/5 transition-colors">
+                  <td className="py-1.5 text-green-500/50">{tx.time}</td>
+                  <td className="py-1.5 font-bold text-green-300 glow-text">{tx.pair}</td>
+                  <td className="py-1.5 text-green-500/70 truncate max-w-[70px]">{tx.algo}</td>
+                  <td className={`py-1.5 text-right font-bold ${tx.pnl >= 0 ? 'text-green-400' : 'text-red-500 glow-text-red'}`}>
                     {tx.pnl >= 0 ? '+' : ''}${tx.pnl.toFixed(2)}
                   </td>
                   <td className="py-1.5 text-right"><RiskGauge risk={tx.risk} /></td>
