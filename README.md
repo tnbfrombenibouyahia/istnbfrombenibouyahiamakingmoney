@@ -1,7 +1,6 @@
 <div align="center">
 
-<!-- Replace with your screenshot: drag & drop into GitHub or add the file path below -->
-<!-- <img src="docs/screenshot.png" alt="NEOTAJIB Quant Terminal" width="100%" /> -->
+<img src="docs/architecture.png" alt="NEOTAJIB Quant Terminal — Project Architecture" width="100%" />
 
 # NEOTAJIB — QUANT TERMINAL
 
